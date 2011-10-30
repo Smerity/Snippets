@@ -8,6 +8,6 @@ void main(void){
 
   unsigned int t;
   for(t=0;;t++) {
-    fprintf(f, "%c", (t*((t>>12|t>>8)&12&t>>4)));
+    fprintf(f, "%c", (t*((t>>12|t>>8)&63&t>>4)));
   }
 }
