@@ -7,6 +7,10 @@ To run on Ubuntu, simply type:
 
      padsp ./sound
 
+If you wish to cat a file, such as your hard drive, directly to /dev/audio then you can run:
+
+    sudo cat /dev/sda | `padsp tee /dev/audio` >& /dev/null
+
 Running this on other distributions that directly support _/dev/dsp_ should be trivial.
 
 For a Youtube link to a large collection of these implementations, see http://www.youtube.com/watch?v=GtQdIYUtAHg
