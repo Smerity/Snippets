@@ -1,0 +1,3 @@
+# ANSI-C Quoting in Bash
+# http://www.gnu.org/software/bash/manual/bashref.html#ANSI_002dC-Quoting
+sort -t$'\t' -rnk 3 ...
