@@ -45,16 +45,16 @@ class Domain(object):
         return future
 
     async def close(self):
+        # Cancelling only starts the process to cancel
         self.fetcher.cancel()
+        # We must wait for the task itself to complete
         await self.fetcher
 
 async def fetch_pages(d):
+    # Must await the get request to get the Futures
     requests = [await d.get(addr) for addr in ['r/ML', 'r/news', 'r/aww']]
-
+    # Must await the response of the Futures to get the data
     await asyncio.gather(*requests)
-
-    await d.get('meow')
-    await d.get('bob')
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
