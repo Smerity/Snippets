@@ -33,8 +33,10 @@ class Domain(object):
         print('Domain({}): Fetch loop started'.format(self.domain))
         while True:
             addr, future = await self.requests.get()
+            # Start an asynchronous sleep of crawl delay in length
             print('Domain({}): Fetching {}'.format(self.domain, addr))
             await asyncio.sleep(1)
+            # Wait until the async sleep with crawl delay is complete
             future.set_result(42)
 
     async def get(self, addr):
