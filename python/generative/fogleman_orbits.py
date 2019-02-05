@@ -1,5 +1,10 @@
 # From https://twitter.com/FogleBird/status/1087152894909075463
 
+# There are N points with random starting positions.
+# Point 0 chases point 1. Point 1 chases 2. Point N-1 chases 0.
+# At each iteration, circles are drawn around each point with a radius = distance to its target.
+# That's it.
+
 import cairocffi as cairo
 from math import hypot, pi
 from random import random
