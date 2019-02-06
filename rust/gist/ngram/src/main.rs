@@ -1,14 +1,15 @@
 //extern crate hashbrown;
+//extern crate indexmap;
 
-// Hashbrown seems slower than the standard map for my work
+// Hashbrown seems slower than the standard map for larger values
 //use hashbrown::HashMap;
+//use indexmap::IndexMap;
 use std::collections::HashMap;
 
 use std::io::Read;
 use std::env;
 use std::io;
 use std::fs::File;
-use std::io::prelude::*;
 use std::str;
 use std::io::BufReader;
 
@@ -21,6 +22,7 @@ fn main() -> io::Result<()> {
 
     //let mut counts = HashMap::new();
     let mut counts = HashMap::with_capacity(1000);
+    //let mut counts = IndexMap::new();
     let mut tmp : Vec<u8> = vec![0; ngram];
     let mut cap = 0;
     let mut seen = 0;
@@ -49,7 +51,7 @@ fn main() -> io::Result<()> {
             // An entry(k) requires ownership of k however - even if the key already exists
             // Increasing allocations in this inner loop is disastrous so we check for key existence
             // Discussions: https://internals.rust-lang.org/t/pre-rfc-abandonning-morals-in-the-name-of-performance-the-raw-entry-api/7043/52
-            if counts.get_mut(&tmp).is_some() {
+            if counts.contains_key(&tmp) {
                 *counts.get_mut(&tmp).unwrap() += 1;
                 dupe += 1;
             } else {
