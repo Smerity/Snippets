@@ -12,24 +12,33 @@ fn main() -> io::Result<()> {
     //println!("{:?}", args);
     let filename = &args[1];
 
-    let mut vec = VecDeque::new();
+    let ngram = 5;
+
+    let mut ring = VecDeque::new();
     let mut counts = HashMap::new();
-    let mut v : Vec<u8> = Vec::new();
+    let mut tmp : Vec<u8> = vec![0; ngram];
 
     // TODO: Byte at a time is crazy slow
     let f = File::open(filename)?;
-    let mut reader = BufReader::new(f);
+    let reader = BufReader::new(f);
     for (_, byte) in reader.bytes().enumerate() {
-        vec.push_back(byte.unwrap());
-        if vec.len() >= 3 {
-            if vec.len() > 3 {
-                vec.pop_front();
+        ring.push_back(byte.unwrap());
+        if ring.len() >= ngram {
+            if ring.len() > ngram {
+                ring.pop_front();
             }
-            v.clear();
-            v.extend(vec.iter());
-            //println!("{:?}", v);
-            //let s = str::from_utf8(&v).unwrap();
-            *counts.entry(v.to_owned()).or_insert(0) += 1;
+            for (i, v) in ring.iter().enumerate() {
+                tmp[i] = *v;
+            }
+            // This is not as concise as an entry based solution
+            // An entry(k) requires ownership of k however - even if the key already exists
+            // Increasing allocations in this inner loop is disastrous so we check for key existence
+            // Discussions: https://internals.rust-lang.org/t/pre-rfc-abandonning-morals-in-the-name-of-performance-the-raw-entry-api/7043/52
+            if counts.get_mut(&tmp).is_some() {
+                *counts.get_mut(&tmp).unwrap() += 1;
+            } else {
+                counts.insert(tmp.to_owned(), 1);
+            }
         }
     }
 
