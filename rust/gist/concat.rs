@@ -5,6 +5,7 @@ use std::io::prelude::*;
 use std::str;
 use std::collections::HashMap;
 use std::collections::VecDeque;
+use std::io::BufReader;
 
 fn main() -> io::Result<()> {
     let args: Vec<String> = env::args().collect();
@@ -17,7 +18,8 @@ fn main() -> io::Result<()> {
 
     // TODO: Byte at a time is crazy slow
     let f = File::open(filename)?;
-    for (_, byte) in f.bytes().enumerate() {
+    let mut reader = BufReader::new(f);
+    for (_, byte) in reader.bytes().enumerate() {
         vec.push_back(byte.unwrap());
         if vec.len() >= 3 {
             if vec.len() > 3 {
