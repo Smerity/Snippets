@@ -24,9 +24,9 @@ fn main() -> io::Result<()> {
     let mut counts = HashMap::with_capacity(1000);
     //let mut counts = IndexMap::new();
     let mut tmp : Vec<u8> = vec![0; ngram];
-    let mut cap = 0;
-    let mut seen = 0;
-    let mut dupe = 0;
+    let mut cap : usize = 0;
+    let mut seen : u64 = 0;
+    let mut dupe : u64 = 0;
 
     println!("Reading...");
     let f = File::open(filename)?;
