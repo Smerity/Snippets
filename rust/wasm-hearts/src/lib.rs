@@ -45,9 +45,22 @@ fn draw_line(buffer: &mut [u32; WIDTH * HEIGHT], mut x: i32, mut y: i32, dx: i32
     //}
 }
 
+fn reset_buffer(buffer: &mut [u32; WIDTH * HEIGHT]) {
+    for y in 0..HEIGHT {
+        for x in 0..WIDTH {
+            buffer[y * WIDTH + x] = 0xFF_00_00_00 + (0x00_00_00_01 * 1 as u32) * ((y / 67) as u32);
+            //buffer[y * WIDTH + x] = 0xFF_00_00_00 + (0x00_00_00_01 * 1 as u32) * ((y / 2 * x * 7 + (17 * x + x) % 97 / 37) as u32);
+        }
+    }
+}
+
 // Replace the old render_frame_safe with this:
 fn render_frame_safe(mut buffer: &mut [u32; WIDTH * HEIGHT]) -> u32 {
     let mut f = FRAME.fetch_add(1, Ordering::Relaxed);
+
+    if f == 0 {
+        reset_buffer(&mut buffer);
+    }
 
     if f < 450 {
     for y in 0..HEIGHT {
@@ -66,11 +79,7 @@ fn render_frame_safe(mut buffer: &mut [u32; WIDTH * HEIGHT]) -> u32 {
 
     if f > 600 {
         FRAME.store(0, Ordering::Relaxed);
-        for y in 0..HEIGHT {
-            for x in 0..WIDTH {
-                buffer[y * WIDTH + x] = 0xFF_00_00_00;
-            }
-        }
+        reset_buffer(&mut buffer);
         f = FRAME.fetch_add(1, Ordering::Relaxed);
         LOOP.fetch_add(1, Ordering::Relaxed);
         //COL.fetch_add(1, Ordering::Relaxed);
