@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html>
+<html style="min-height:100">
   <head>
-    <script type="module">
+    <script>
       async function init() {
         const { instance } = await WebAssembly.instantiateStreaming(
           fetch("./bare_metal_wasm.wasm")
@@ -37,14 +37,14 @@
       }
 
       console.log('Rendering...');
-      init();
+      //init();
       console.log('Rendered');
     </script>
   </head>
-  <body style="background-color: #000;">
+  <body style="background-color: #000;"> <!-- background: linear-gradient(#a64445, #57161d); height: 100%;">-->
     <div style="margin: 2em;">
       <center>
-        <canvas style="margin: auto; border: 6px dashed #55110A" id="demo-canvas"></canvas>
+        <canvas onclick="init()" width=600 height=600 style="background-color: #000; margin: auto; border: 6px dashed #55110A" id="demo-canvas"></canvas>
       </center>
     </div>
   </body>

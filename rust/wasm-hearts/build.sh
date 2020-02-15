@@ -10,4 +10,4 @@ cargo build --target $TARGET --release
 mkdir -p www
 #wasm-opt -o www/bare_metal_wasm.wasm -Oz $BINARY
 cp $BINARY www/bare_metal_wasm.wasm
-ls -lh www/bare_metal_wasm.wasm
+ls -ltr www/bare_metal_wasm.wasm
