@@ -54,6 +54,7 @@ int main(int argc, const char *argv[])
     }
     for (size_t i = 0; i < N; ++i) {
       sum += z[i];
+      if (k + 1 < K) xx[k + 1][i] *= z[i];
     }
   }
   t = clock() - t;
