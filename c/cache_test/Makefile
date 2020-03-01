@@ -1,6 +1,7 @@
 CC=clang
 LD=clang
 
+#OPT_LEVEL=-O3 -flto # -mno-sse -mno-avx
 OPT_LEVEL=-Ofast -march=native -flto -mavx -mavx2 -mfma -ffp-contract=fast -ffast-math -fomit-frame-pointer
 
 CC_OPTS=$(OPT_LEVEL) -fPIC -Wall -Wno-unused-variable -Werror -Wfatal-errors

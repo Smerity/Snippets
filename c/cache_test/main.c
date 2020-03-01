@@ -29,29 +29,41 @@ int main(int argc, const char *argv[])
 
   clock_t t;
   int N = atoi(argv[1]);
-  int LOOPS = 10 * 10000000;
+  int K = 1000;
+  int LOOPS = 1 * 1000000;
 
-  float *x = newArray(N);
-  float *y = newArray(N);
-  float *z = newArray(N);
+  float **xx = (float **)malloc(sizeof(float **) * K);
+  float **yy = (float **)malloc(sizeof(float **) * K);
+  float **zz = (float **)malloc(sizeof(float **) * K);
+
+  for (int i = 0; i < K; ++i) {
+    xx[i] = newArray(N);
+    yy[i] = newArray(N);
+    zz[i] = newArray(N);
+  }
+
+  float sum = 0.0;
 
   t = clock();
-  for (int i = 0; i < LOOPS; ++i) {
-    scalarproduct(x, y, z, N);
+  for (int k = 0; k < K; ++k) {
+    float *x = xx[k];
+    float *y = yy[k];
+    float *z = zz[k];
+    for (int i = 0; i < LOOPS / K; ++i) {
+      scalarproduct(x, y, z, N);
+    }
+    for (size_t i = 0; i < N; ++i) {
+      sum += z[i];
+    }
   }
   t = clock() - t;
   double time_taken = ((double)t)/CLOCKS_PER_SEC;
 
-  float sum = 0.0;
-  for (size_t i = 0; i < N; ++i) {
-    sum += z[i];
-  }
-
   //printf("x * y for two arrays of size %d over %d loops:\n", N, LOOPS);
   fprintf(stderr, "%f\n", sum);
-  fprintf(stderr, "%f %f %f\n", z[0], z[10], z[100]);
+  //fprintf(stderr, "%f %f %f\n", z[0], z[10], z[100]);
   //printf("fun() took %f seconds to execute \n", time_taken);
-  printf("N = %d:\t%2.4f\n", N, time_taken);
+  printf("N = %d, K = %d, L/K = %d:\t%2.4f\n", N, K, LOOPS/K, time_taken);
 
   return 0;
 }
