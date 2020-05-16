@@ -1,11 +1,9 @@
-//use itertools::izip;
 use rand::Rng;
 
 fn main() {
     let mut rng = rand::thread_rng();
 
-    //const L: usize = 270;
-    const L: usize = 271;
+    const L: usize = 272;
     const ONE: f32 = 1.0;
     const Z: f32 = ONE * 0.0;
 
@@ -24,10 +22,8 @@ fn main() {
 
     for _ in 0..(1000 * 1000) {
         for r in 0..100 {
-            for idx in 0..L {
-                z[idx] = x[idx] * y[idx];
-            //for (a, b, c) in izip!(x.iter(), y.iter(), z.iter_mut()) {
-            //    *c = a * b;
+            for ((a, b), c) in x.iter().zip(y.iter()).zip(z.iter_mut()) {
+                *c = a * b;
             }
         }
     }
