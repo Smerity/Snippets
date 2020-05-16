@@ -2,9 +2,10 @@
 
 rm TIME
 
-for idx in {1..18} # 512}
+#for idx in {9..18}
+for idx in {1..128}
 do
-  #./main $(($idx * 128)) >> TIME
-  N=$(echo "2 ^ $idx" | bc)
+  N=$(($idx * 128))
+  #N=$(echo "2 ^ $idx" | bc)
   ./main $N >> TIME
 done
