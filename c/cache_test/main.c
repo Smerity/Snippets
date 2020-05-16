@@ -4,7 +4,7 @@
 
 float scalarproduct(float *array1, float *array2, float *dest, size_t N) {
   float sum = 0.0f;
-  uint UNROLL = 512;
+  int UNROLL = 512;
   //for (size_t outer = 0; outer < N / UNROLL; outer++) {
   //  for (size_t inner = 0; inner < UNROLL; inner++) {
   //    size_t i = outer * UNROLL + inner;
