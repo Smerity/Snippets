@@ -18,7 +18,8 @@ float scalarproduct(float *array1, float *array2, float *dest, size_t N) {
 float *newArray(int N) {
   float *x = (float *)malloc(N * sizeof(float));
   for (size_t i = 0; i < N; ++i) {
-    x[i] = 2 * ((float)rand() / (float)RAND_MAX) - 1;
+    x[i] = i;
+    //x[i] = 2 * ((float)rand() / (float)RAND_MAX) - 1;
   }
   return x;
 }
@@ -30,7 +31,7 @@ int main(int argc, const char *argv[])
   clock_t t;
   int N = atoi(argv[1]);
   int K = 1000;
-  int LOOPS = 1 * 1000000;
+  int LOOPS = 1000 * 1000;
 
   float **xx = (float **)malloc(sizeof(float **) * K);
   float **yy = (float **)malloc(sizeof(float **) * K);
@@ -53,8 +54,8 @@ int main(int argc, const char *argv[])
       scalarproduct(x, y, z, N);
     }
     for (size_t i = 0; i < N; ++i) {
-      sum += z[i];
-      if (k + 1 < K) xx[k + 1][i] *= z[i];
+      if (k == 0) sum += z[i];
+      //if (k + 1 < K) xx[k + 1][i] *= z[i];
     }
   }
   t = clock() - t;
