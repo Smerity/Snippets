@@ -6,3 +6,7 @@ edition = "2018"
 
 [dependencies]
 rand = "0.7.3"
+ispc = "1.0.9"
+
+[build-dependencies]
+ispc = "1.0.9"

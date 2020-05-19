@@ -1,49 +1,47 @@
-use rand::Rng;
+#[macro_use]
+extern crate ispc;
 
 use std::arch::x86_64::*;
 
-#[allow(non_camel_case_types)]
-pub type f32x8 = __m256;
-#[allow(non_upper_case_globals)]
-pub const f32x8_LENGTH: usize = 8;
+ispc_module!(ispdotc);
 
-fn tof32x8(s: &[f32]) -> f32x8 {
-    //assert_eq!(s.len(), f32x8_LENGTH);
-    // Using 0..8 results in a vpermps
-    //unsafe { _mm256_set_ps(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7]) }
-    unsafe { _mm256_set_ps(s[7], s[6], s[5], s[4], s[3], s[2], s[1], s[0]) }
-}
-
+#[inline(never)]
 fn simddotp(x: &[f32], y: &[f32], z: &mut [f32]) {
-    //let (a, b, c) = (&x[0..32], &y[0..32], &mut z[0..32]);
-    for ((a, b), c) in x.chunks_exact(8 * 4).zip(y.chunks_exact(8 * 4)).zip(z.chunks_exact_mut(8 * 4)) {
-        unsafe {
-            let xa = tof32x8(&a[0..8]);
-            let xb = tof32x8(&a[8..16]);
-            let xc = tof32x8(&a[16..24]);
-            let xd = tof32x8(&a[24..32]);
-
-            let ya = tof32x8(&b[0..8]);
-            let yb = tof32x8(&b[8..16]);
-            let yc = tof32x8(&b[16..24]);
-            let yd = tof32x8(&b[24..32]);
-
-            let r1 = _mm256_mul_ps(xa, ya);
-            let r2 = _mm256_mul_ps(xb, yb);
-            let r3 = _mm256_mul_ps(xc, yc);
-            let r4 = _mm256_mul_ps(xd, yd);
-
-            _mm256_storeu_ps(c[0..8].as_mut_ptr(), r1);
-            _mm256_storeu_ps(c[8..16].as_mut_ptr(), r2);
-            _mm256_storeu_ps(c[16..24].as_mut_ptr(), r3);
-            _mm256_storeu_ps(c[24..32].as_mut_ptr(), r4);
+    unsafe {
+        for ((a, b), c) in x
+            .chunks_exact(8 * 4)
+            .zip(y.chunks_exact(8 * 4))
+            .zip(z.chunks_exact_mut(8 * 4))
+        {
+            //
+            let x_a = _mm256_loadu_ps(a.as_ptr().offset(0));
+            let y_a = _mm256_loadu_ps(b.as_ptr().offset(0));
+            let r_a = _mm256_loadu_ps(c.as_ptr().offset(0));
+            _mm_prefetch(a.as_ptr().offset(16) as *const i8, _MM_HINT_T1);
+            _mm256_storeu_ps(c.as_mut_ptr().offset(0), _mm256_fmadd_ps(x_a, y_a, r_a));
+            //
+            let x_b = _mm256_loadu_ps(a.as_ptr().offset(8));
+            let y_b = _mm256_loadu_ps(b.as_ptr().offset(8));
+            let r_b = _mm256_loadu_ps(c.as_ptr().offset(8));
+            _mm256_storeu_ps(c.as_mut_ptr().offset(8), _mm256_fmadd_ps(x_b, y_b, r_b));
+            //
+            //
+            let x_c = _mm256_loadu_ps(a.as_ptr().offset(16));
+            let y_c = _mm256_loadu_ps(b.as_ptr().offset(16));
+            let r_c = _mm256_loadu_ps(c.as_ptr().offset(16));
+            _mm256_storeu_ps(c.as_mut_ptr().offset(16), _mm256_fmadd_ps(x_c, y_c, r_c));
+            //
+            let x_d = _mm256_loadu_ps(a.as_ptr().offset(24));
+            let y_d = _mm256_loadu_ps(b.as_ptr().offset(24));
+            let r_d = _mm256_loadu_ps(c.as_ptr().offset(24));
+            _mm256_storeu_ps(c.as_mut_ptr().offset(24), _mm256_fmadd_ps(x_d, y_d, r_d));
         }
     }
 }
 
 fn dotp(x: &[f32], y: &[f32], z: &mut [f32]) {
     for ((a, b), c) in x.iter().zip(y.iter()).zip(z.iter_mut()) {
-        *c = a * b;
+        *c += a * b;
     }
 }
 
@@ -51,8 +49,8 @@ fn main() {
     let mut rng = rand::thread_rng();
 
     // Target for 1024 * 8 = 183218540000
-    const L: usize = 1024 * 8;
-    const BLOCK: usize = 512;
+    const L: usize = 1024 * 1;
+    const BLOCK: usize = 1024;
     const ONE: f32 = 1.0;
     const Z: f32 = ONE * 0.0;
 
@@ -71,20 +69,28 @@ fn main() {
 
     let mut z: [f32; L] = [Z; L];
 
-    for _ in 0..(1000 * 1000) {
-        for r in 0..100 {
+    for _ in 0..(10 * 1000 * 1000) {
+        for _r in 0..1 {
             //for ((a, b), c) in x.iter().zip(y.iter()).zip(z.iter_mut()) {
             //    *c = a * b;
             //}
-            for ((A, B), C) in x.chunks_exact(BLOCK).zip(y.chunks_exact(BLOCK)).zip(z.chunks_exact_mut(BLOCK)) {
-                simddotp(A, B, C);
+            for ((a, b), c) in x
+                .chunks_exact(BLOCK)
+                .zip(y.chunks_exact(BLOCK))
+                .zip(z.chunks_exact_mut(BLOCK))
+            {
+                unsafe {
+                    ispdotc::dotp(a.as_ptr(), b.as_ptr(), c.as_mut_ptr(), BLOCK as u32);
+                }
+                //simddotp(a, b, c);
+                //dotp(a, b, c);
             }
         }
     }
 
-    let mut total = Z;
+    let mut total: f64 = Z as f64;
     for el in z.iter() {
-        total += *el;
+        total += *el as f64;
     }
     println!("{}", total);
 }
