@@ -6,3 +6,5 @@
 
 `perf record --call-graph=lbr ./target/release/dotp -B -e cache-references,cache-misses,cycles,instructions,branches,faults,migrations`
 `perf report --hierarchy -M intel`
+
+`vtune -collect uarch-exploration ./target/release/dotp`

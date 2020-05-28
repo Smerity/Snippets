@@ -1,40 +1,37 @@
 #[macro_use]
 extern crate ispc;
-
+ispc_module!(ispdotc);
 use std::arch::x86_64::*;
 
-ispc_module!(ispdotc);
+#[inline(never)]
+fn simddotp_no_bounds(x: &[f32], y: &[f32], z: &mut [f32]) {
+    for idx in 0..1024 / 8 {
+        unsafe {
+            let (a, b, c) = (
+                x.get_unchecked(idx * 8),
+                y.get_unchecked(idx * 8),
+                z.get_unchecked_mut(idx * 8),
+            );
+            let x_a = _mm256_loadu_ps(a);
+            let y_a = _mm256_loadu_ps(b);
+            let r_a = _mm256_loadu_ps(c);
+            _mm256_storeu_ps(c, _mm256_fmadd_ps(x_a, y_a, r_a));
+        }
+    }
+}
 
 #[inline(never)]
 fn simddotp(x: &[f32], y: &[f32], z: &mut [f32]) {
-    unsafe {
-        for ((a, b), c) in x
-            .chunks_exact(8 * 4)
-            .zip(y.chunks_exact(8 * 4))
-            .zip(z.chunks_exact_mut(8 * 4))
-        {
-            //
-            let x_a = _mm256_loadu_ps(a.as_ptr().offset(0));
-            let y_a = _mm256_loadu_ps(b.as_ptr().offset(0));
-            let r_a = _mm256_loadu_ps(c.as_ptr().offset(0));
-            _mm_prefetch(a.as_ptr().offset(16) as *const i8, _MM_HINT_T1);
-            _mm256_storeu_ps(c.as_mut_ptr().offset(0), _mm256_fmadd_ps(x_a, y_a, r_a));
-            //
-            let x_b = _mm256_loadu_ps(a.as_ptr().offset(8));
-            let y_b = _mm256_loadu_ps(b.as_ptr().offset(8));
-            let r_b = _mm256_loadu_ps(c.as_ptr().offset(8));
-            _mm256_storeu_ps(c.as_mut_ptr().offset(8), _mm256_fmadd_ps(x_b, y_b, r_b));
-            //
-            //
-            let x_c = _mm256_loadu_ps(a.as_ptr().offset(16));
-            let y_c = _mm256_loadu_ps(b.as_ptr().offset(16));
-            let r_c = _mm256_loadu_ps(c.as_ptr().offset(16));
-            _mm256_storeu_ps(c.as_mut_ptr().offset(16), _mm256_fmadd_ps(x_c, y_c, r_c));
-            //
-            let x_d = _mm256_loadu_ps(a.as_ptr().offset(24));
-            let y_d = _mm256_loadu_ps(b.as_ptr().offset(24));
-            let r_d = _mm256_loadu_ps(c.as_ptr().offset(24));
-            _mm256_storeu_ps(c.as_mut_ptr().offset(24), _mm256_fmadd_ps(x_d, y_d, r_d));
+    for ((a, b), c) in x
+        .chunks_exact(8)
+        .zip(y.chunks_exact(8))
+        .zip(z.chunks_exact_mut(8))
+    {
+        unsafe {
+            let x_a = _mm256_loadu_ps(a.as_ptr());
+            let y_a = _mm256_loadu_ps(b.as_ptr());
+            let r_a = _mm256_loadu_ps(c.as_ptr());
+            _mm256_storeu_ps(c.as_mut_ptr(), _mm256_fmadd_ps(x_a, y_a, r_a));
         }
     }
 }
@@ -42,6 +39,7 @@ fn simddotp(x: &[f32], y: &[f32], z: &mut [f32]) {
 fn dotp(x: &[f32], y: &[f32], z: &mut [f32]) {
     for ((a, b), c) in x.iter().zip(y.iter()).zip(z.iter_mut()) {
         *c += a * b;
+        //*c = a.mul_add(*b, *c);
     }
 }
 
@@ -72,18 +70,20 @@ fn main() {
     for _ in 0..(10 * 1000 * 1000) {
         for _r in 0..1 {
             //for ((a, b), c) in x.iter().zip(y.iter()).zip(z.iter_mut()) {
-            //    *c = a * b;
+            //    *c += a * b;
             //}
             for ((a, b), c) in x
                 .chunks_exact(BLOCK)
                 .zip(y.chunks_exact(BLOCK))
                 .zip(z.chunks_exact_mut(BLOCK))
             {
+                // Note: We're assuming 1024 dimensional vectors for speed
                 unsafe {
-                    ispdotc::dotp(a.as_ptr(), b.as_ptr(), c.as_mut_ptr(), BLOCK as u32);
+                    ispdotc::dotp(a.as_ptr(), b.as_ptr(), c.as_mut_ptr());
                 }
                 //simddotp(a, b, c);
                 //dotp(a, b, c);
+                //simddotp_no_bounds(a, b, c);
             }
         }
     }
